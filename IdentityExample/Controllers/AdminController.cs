@@ -16,7 +16,7 @@ namespace IdentityExample.Controllers
 
         public IActionResult Index()
         {
-            return View(userManager.Users.ToList());
+            return View(userManager.Users.ToList()); //Kayitli olan kullanicilarin listesini doner. 
         }
     }
 }
