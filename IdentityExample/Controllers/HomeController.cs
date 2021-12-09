@@ -27,18 +27,6 @@ namespace IdentityExample.Controllers
         {
             return View();
         }
-
-        public IActionResult Privacy()
-        {
-            return View();
-        }
-
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-        }
-
         public IActionResult Login(string returnUrl)
         {
             TempData["ReturnUrl"] = returnUrl;
@@ -57,26 +45,53 @@ namespace IdentityExample.Controllers
 
             if (user != null)
             {
+                if (await _userManager.IsLockedOutAsync(user)) //Kullanıcı girişi kilitli mi kontrolü yapıyoruz.
+                {
+                    ModelState.AddModelError("", "Hesabınız bir süreliğine  kilitlenmiştir. Lütfen daha sonra tekrar deneyiniz.");
+
+                    return View(userLogin);
+                }
+
                 await _signInManager.SignOutAsync(); //Sistemde eski benim yazdığım bir cookie var ise o silinmesi için öncelikle bir çıkış yapıyorum.
 
                 Microsoft.AspNetCore.Identity.SignInResult result =  await _signInManager.PasswordSignInAsync(user, userLogin.Password, userLogin.RememberMe, false ); // isPersistent : Stattup'da verdiğim cookie tutma süremin geçerli olup olmamasını belirtiyorum.
                                                                                                                                                                        // true set edersem eğer geçerli, false set edersem eğer browser kapanana kadar kullanıcı hatırlanır ve sonra tekrardan login olması gerekir. 
                                                                                                                                                                        // Beni Hatırla butonuna eğer basılmış ise true set edilir. 
                                                                                                                                                                        // userLogin.RememberMe ile checkbox tıklanmış mı tıklanmamış mı ona göre isPersistent set edildi. 
-                                                                                                                                                                       // lockoutOnFailure : Kullanıcı başarısız girişlerde kullanıcıyı kitleyip kitlememe özelliği ile ilgi parametredir. (Belirttiğimiz süre boyunca kullanıcının girişini kitleyebilir/ engelleyebiliriz.) 
                 if (result.Succeeded)
                 {
+                    await _userManager.ResetAccessFailedCountAsync(user); //Eğer kullanıcı başarılı bir giriş yaptı ise hatalı giriş değeri sıfırlanıyor.
+
                     if (TempData["ReturnUrl"] != null)
                     {
                         return Redirect(TempData["ReturnUrl"].ToString());
                     }
                     return RedirectToAction("Index", "Member");
                 }
+                else
+                {
+                    await _userManager.AccessFailedAsync(user);  //Eğer kullanıcı başarılı bir giriş yapamadıysa başarısız giriş sayısı(AccessFailedCount) arttırılıyor.
+
+                    int fail =await _userManager.GetAccessFailedCountAsync(user); // Kullanıcının kaç kere başarısız giriş yaptığı bilgisi alınıyor. 
+
+                    ModelState.AddModelError("", $"{fail} kez başarısız giriş." );
+
+                    if (fail == 3)
+                    {
+                        await _userManager.SetLockoutEndDateAsync(user, new DateTimeOffset(System.DateTime.Now.AddMinutes(20))); //Kullanıcı eğer 3 kere başarısız giriş yaptı ise kullanıcıyı kilitliyorum.
+
+                        ModelState.AddModelError("", "Hesabınız 3 başarısız girişten dolayı 20 dakika süre kilitlenmiştir. Lütfen daha sonra tekrar deneyiniz.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("", "Email adresiniz veya şifreniz yanlış.");
+                    }
+                }
             }
             else
             {
                 //ModelState.AddModelError(nameof(LoginViewModel.Email), "Geçersiz email adresi veya şifresi"); //Sadece summary'de gösterilmesini değil de hatanın Email altında gözükmesini istiyorum. 
-                ModelState.AddModelError("", "Geçersiz email adresi veya şifresi"); 
+                ModelState.AddModelError("", "Bu email adesine kayıtlı kullanıcı bulunamamıştır."); 
             }
 
             return View(userLogin);
@@ -120,5 +135,17 @@ namespace IdentityExample.Controllers
 
             return View(userViewModel);
         }
+
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
     }
 }
