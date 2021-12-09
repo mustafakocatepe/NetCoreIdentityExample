@@ -36,7 +36,7 @@ namespace IdentityExample.Extensions
             CookieBuilder cookieBuilder = new();
             cookieBuilder.Name = "MyIdentityExample";
             cookieBuilder.HttpOnly = true; //Güvenlik için ClientSide tarafta Cookieme erişimi engellemek için bu ayarı True olarak set ediyoruz. Sadece bir http isteği üzerinden Cookie bilgisini almak istiyorum.Client Side tarafında Cookie bilgisini okumak istemiyorum.
-            cookieBuilder.Expiration = TimeSpan.FromDays(60); //60 gün boyunca kullanıcı Login olmadan sistemimde işlem yapabilir. 
+            //cookieBuilder.Expiration = TimeSpan.FromDays(60); //60 gün boyunca kullanıcı Login olmadan sistemimde işlem yapabilir. 
             cookieBuilder.SameSite = SameSiteMode.Lax; //Bir cookie'yi kaydettikten sonra sadece bu site üzerinden cookie'ye ulaşabilirim. (Lax bu ayarı kapatır, Strict ise bu ayarı açar.)
             cookieBuilder.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             //Always : Kullanıcının Cookie'sini sadece HTTPS üzerinden bir istek geldiyse gönderiyor.
@@ -49,6 +49,7 @@ namespace IdentityExample.Extensions
                 opts.LoginPath = new PathString("/Home/Login"); //Kullanıcı eğer Login olmadan login olan kullanıcıların erişmeye çalıştığı bir sayfaya erişmeye çalışırsa burada belirttiğimiz sayfaya yönlendirilir.
                 //opts.LogoutPath = new PathString();
                 opts.Cookie = cookieBuilder;
+                opts.ExpireTimeSpan = System.TimeSpan.FromDays(60);
                 opts.SlidingExpiration = true; //Eğer true set edilirse Kullanıcının Cookie Expiration gününün yarısına geldiğinde Cookie yenilenerek Expiration günü kadar tekrar Cookie'si aktif olur.
                                                //Kullanıcın Cookie süresinin ömrünü uzatmak için mantıklı bir yaklaşım. Kullanıcıyı tekrar tekrar Login olmaya zorlamamış oluyoruz.
             });

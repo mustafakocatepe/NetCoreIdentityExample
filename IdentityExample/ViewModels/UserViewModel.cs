@@ -6,6 +6,7 @@ namespace IdentityExample.ViewModels
     {
         [Required(ErrorMessage = "Kullanıcı ismi gerekldir.")]
         [Display(Name = "Kullanıcı Adı")] //Textbox önünde gözükecek olan yazı
+        //[RegularExpression(@"^[A-Z][a-z0-9_-]{3,19}$", ErrorMessage = "İsim alanı uygun formatta değil")]
         public string UserName { get; set; }
 
         [Display(Name = "Tel No:")]
