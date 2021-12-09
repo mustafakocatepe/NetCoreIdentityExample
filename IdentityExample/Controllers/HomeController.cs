@@ -39,8 +39,9 @@ namespace IdentityExample.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        public IActionResult Login()
+        public IActionResult Login(string returnUrl)
         {
+            TempData["ReturnUrl"] = returnUrl;
             return View();
         }
 
@@ -58,12 +59,17 @@ namespace IdentityExample.Controllers
             {
                 await _signInManager.SignOutAsync(); //Sistemde eski benim yazdığım bir cookie var ise o silinmesi için öncelikle bir çıkış yapıyorum.
 
-                Microsoft.AspNetCore.Identity.SignInResult result =  await _signInManager.PasswordSignInAsync(user, userLogin.Password, false, false ); //isPersistent : Stattup'da verdiğim cookie tutma süremin geçerli olup olmamasını belirtiyorum.
-                                                                                                                                                        // true set edersem eğer geçerli, false set edersem eğer browser kapanana kadar kullanıcı hatırlanır ve sonra tekrardan login olması gerekir. 
-                                                                                                                                                        // Beni Hatırla butonuna eğer basılmış ise true set edilir. 
-                                                                                                                                                        // lockoutOnFailure : Kullanıcı başarısız girişlerde kullanıcıyı kitleyip kitlememe özelliği ile ilgi parametredir. (Belirttiğimiz süre boyunca kullanıcının girişini kitleyebilir/ engelleyebiliriz.) 
+                Microsoft.AspNetCore.Identity.SignInResult result =  await _signInManager.PasswordSignInAsync(user, userLogin.Password, userLogin.RememberMe, false ); // isPersistent : Stattup'da verdiğim cookie tutma süremin geçerli olup olmamasını belirtiyorum.
+                                                                                                                                                                       // true set edersem eğer geçerli, false set edersem eğer browser kapanana kadar kullanıcı hatırlanır ve sonra tekrardan login olması gerekir. 
+                                                                                                                                                                       // Beni Hatırla butonuna eğer basılmış ise true set edilir. 
+                                                                                                                                                                       // userLogin.RememberMe ile checkbox tıklanmış mı tıklanmamış mı ona göre isPersistent set edildi. 
+                                                                                                                                                                       // lockoutOnFailure : Kullanıcı başarısız girişlerde kullanıcıyı kitleyip kitlememe özelliği ile ilgi parametredir. (Belirttiğimiz süre boyunca kullanıcının girişini kitleyebilir/ engelleyebiliriz.) 
                 if (result.Succeeded)
                 {
+                    if (TempData["ReturnUrl"] != null)
+                    {
+                        return Redirect(TempData["ReturnUrl"].ToString());
+                    }
                     return RedirectToAction("Index", "Member");
                 }
             }

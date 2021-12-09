@@ -34,10 +34,8 @@ namespace IdentityExample
                 opts.UseSqlServer(Configuration["ConnectionStrings:DefaultConnectionString"]);
             });
 
-
-            services.ConfigureCookie();  //Cookie ayarlarý ServiceExtensions içine yazýldý. 
-
             services.ConfigureIdentity(); //Identity ayarlarý ServiceExtensions içine yazýldý. 
+            services.ConfigureCookie();  //Cookie ayarlarý ServiceExtensions içine yazýldý. 
 
             services.AddControllersWithViews();
         }
